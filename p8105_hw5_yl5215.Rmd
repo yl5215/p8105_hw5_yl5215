@@ -1,0 +1,87 @@
+---
+title: "p8105_hw5_yl5215"
+author: "Yucheng Li"
+date: '2022-11-16'
+output: github_document
+---
+
+```{r}
+library(tidyverse)
+```
+
+# Problem 2
+
+```{r}
+homicide = 
+  read_csv("data/homicide.csv") %>%
+  janitor::clean_names()
+```
+## Decribe the raw data
+
+The dataset contains `r ncol(homicide)` variables and `r nrow(homicide)` observations. The variables included are `r variable.names(homicide)`. `uid` represents case ID which is composed of city name and a number. `victim_last`, `victim_first`, `victim_race`, `victim_age`, `victim_sex` represent the last name, first name, race, age, and sex of the victim, respectively. `city` and `state` represent the city and state where the incident happened, and `lat` and `lon` represent the latitude longitude where the incident happened. `disposition` indicates that the case is either "Closed by arrest", "Closed without arrest", or "Open/No arrest".
+
+## number of homicides and number of unsolved homicides in each city
+
+```{r message=FALSE, warning=FALSE}
+homicide = 
+  homicide %>% 
+  mutate(city_state = paste(city, state, sep = ", ", collapse = NULL))
+total_homicide = 
+  homicide %>% 
+  group_by(city_state) %>% 
+  summarize(number_of_homicides = n())
+unsolved_homicide = 
+  homicide %>%
+  filter(disposition != "Closed by arrest") %>% 
+  group_by(city_state) %>% 
+  summarize(number_of_unsolved_homicides = n())
+total_unsolved_homicide = 
+  left_join(total_homicide, unsolved_homicide) %>% 
+  replace(is.na(.), 0)
+total_unsolved_homicide
+```
+
+## Proportion of unsolved homicides in Baltimore, MD
+
+```{r message=FALSE, warning=FALSE}
+bal_unsolved_prop = 
+  prop.test(1825, 2827, p = NULL, 
+            alternative = "two.sided", conf.level = 0.95, correct = TRUE)
+bal_unsolved_prop
+bal_unsolved_prop_tibble = broom::tidy(bal_unsolved_prop)
+bal_unsolved_prop_tibble
+bal_unsolved_prop_tibble %>% pull(estimate)
+bal_unsolved_prop_tibble %>% pull(conf.low)
+bal_unsolved_prop_tibble %>% pull(conf.high)
+bal_unsolved_prop_tibble %>% mutate(ci = paste("(", round(conf.low, 4), ",", round(conf.high, 4), ")")) %>% pull(ci)
+bal_unsolved_prop_tibble
+```
+## Estimate of the proportion of unsolved homicides and its confidence interval for each city
+
+```{r message=FALSE, warning=FALSE}
+unsolved_prop = 
+  total_unsolved_homicide %>% 
+  filter(city_state != "Tulsa, AL") %>% 
+  mutate(result = purrr::map2(.x = number_of_unsolved_homicides, .y = number_of_homicides, ~broom::tidy(prop.test(x = .x, n = .y, alternative = "two.sided", conf.level = 0.95, correct = TRUE)))) %>% 
+  unnest(result) %>% 
+  select(city_state, estimate, conf.low, conf.high) %>% 
+  mutate(confidence_interval = paste("(", round(conf.low, 4), ",", round(conf.high, 4), ")"))
+
+unsolved_prop
+```
+
+Data for Tulsa, AL was dropped because it only contains 1 observation and cannot be used to obtain any meaningful inference.
+
+## Plot showing estimates and confidence intervals
+
+```{r}
+unsolved_plot = 
+  unsolved_prop %>% 
+  ggplot(aes(x = reorder(city_state, estimate), y = estimate)) + 
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Estimates and CIs of Proportion of Unsolved Homicides for US Cities", x = "City, State", y = "Estimates")
+unsolved_plot
+```
+
