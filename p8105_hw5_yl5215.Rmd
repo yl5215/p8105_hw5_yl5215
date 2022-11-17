@@ -160,7 +160,7 @@ ave_estimate_plot =
   summarize(ave_estimate = mean(mu_hat)) %>% 
   ggplot(aes(x = as.factor(mu), y = ave_estimate)) + 
   geom_point(alpha = 1) +
-  labs(title = "Average estimate Of mu for mu = 1, 2, 3, 4, 5, 6", x = "True value of mu", y = "Average estimate of mu")
+  labs(title = "Average estimate of mu for mu = 1, 2, 3, 4, 5, 6", x = "True value of mu", y = "Average estimate of mu")
 ave_estimate_plot
 ```
 
@@ -174,7 +174,7 @@ ave_estimate_reject_plot =
   summarize(ave_estimate_reject = mean(mu_hat)) %>% 
   ggplot(aes(x = as.factor(mu), y = ave_estimate_reject)) + 
   geom_point(alpha = 1) +
-  labs(title = "Average estimate Of mu for mu = 1, 2, 3, 4, 5, 6 in samples with null rejected", x = "True value of mu", y = "Average estimate of mu")
+  labs(title = "Average estimate of mu for mu = 1, 2, 3, 4, 5, 6 in samples with null rejected", x = "True value of mu", y = "Average estimate of mu")
 ave_estimate_reject_plot
 ```
 
